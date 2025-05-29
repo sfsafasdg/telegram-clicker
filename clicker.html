@@ -1,0 +1,48 @@
+import asyncio
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils import executor
+
+API_TOKEN = '8106535143:AAGSR0KSDZV5v-3P2MztneZ-e7gxA7ArOk8'
+
+
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
+
+# Память для хранения баланса (в будущем лучше использовать БД)
+user_data = {}
+
+# Главное меню
+main_menu = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton("👆 Кликнуть")],
+        [KeyboardButton("💰 Баланс")],
+    ],
+    resize_keyboard=True
+)
+
+@dp.message_handler(commands=['start'])
+async def start_game(message: types.Message):
+    user_id = message.from_user.id
+    if user_id not in user_data:
+        user_data[user_id] = {"balance": 0}
+    await message.answer(
+        "👋 Добро пожаловать в Abdul Crypto Clicker Bot!\n"
+        "Нажимай '👆 Кликнуть' чтобы зарабатывать крипту!",
+        reply_markup=main_menu
+    )
+
+@dp.message_handler(lambda message: message.text == "👆 Кликнуть")
+async def click_handler(message: types.Message):
+    user_id = message.from_user.id
+    user_data[user_id]["balance"] += 1
+    await message.answer(f"💸 Ты заработал 1 крипту!\n💼 Твой текущий баланс: {user_data[user_id]['balance']}")
+
+@dp.message_handler(lambda message: message.text == "💰 Баланс")
+async def balance_handler(message: types.Message):
+    user_id = message.from_user.id
+    balance = user_data.get(user_id, {}).get("balance", 0)
+    await message.answer(f"💼 Твой баланс: {balance} крипты.")
+
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
